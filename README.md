@@ -1,1 +1,1 @@
-# sample-app
+# sample-day-1
