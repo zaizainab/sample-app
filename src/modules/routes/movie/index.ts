@@ -3,6 +3,8 @@ import Sequelize from 'sequelize';
 
 import { MovieTO, GetMovieTO, UpdateMovieTO, DeleteMovieTO } from './schema';
 import { MoviesFactory } from '../../../plugins/db/models/movie';
+import { deleteMovie, findAll, insert, insertBulk, update } from '../../services/movie-service';
+import { kafkaSubscribe2 } from '../../../plugins/kafka/consumer';
 
 
 export default fp((server, opts, next) => {
@@ -21,6 +23,17 @@ export default fp((server, opts, next) => {
                     data
                 });
             }).catch((err) => {
+                const { message, stack } = err;
+                let errorMsg = {
+
+                    method: request.routerMethod,
+                    path: request.routerPath,
+                    param: request.body,
+                    message,
+                    stack
+                };
+                server.apm.captureError(JSON.stringify(errorMsg));
+
                 return reply.code(400).send({
                     success: false,
                     message: 'Error get data movies.',
@@ -29,6 +42,17 @@ export default fp((server, opts, next) => {
             });
 
         } catch (error) {
+            const { message, stack } = error;
+            let errorMsg = {
+
+                method: request.routerMethod,
+                path: request.routerPath,
+                param: request.body,
+                message,
+                stack
+            };
+            server.apm.captureError(JSON.stringify(errorMsg));
+
             request.log.error(error);
             return reply.send(400);
         }
@@ -48,7 +72,18 @@ export default fp((server, opts, next) => {
                     message: 'Successful!',
                     data,
                 });
-            }).catch(err => {                    
+            }).catch(err => {     
+                const { message, stack } = err;
+                let errorMsg = {
+
+                    method: request.routerMethod,
+                    path: request.routerPath,
+                    param: request.body,
+                    message,
+                    stack
+                };
+                server.apm.captureError(JSON.stringify(errorMsg));
+                            
                 return reply.code(400).send({
                     success: false,
                     message: 'Error in insert new record.',
@@ -57,6 +92,17 @@ export default fp((server, opts, next) => {
             });
 
         } catch (error) {
+            const { message, stack } = error;
+            let errorMsg = {
+
+                method: request.routerMethod,
+                path: request.routerPath,
+                param: request.body,
+                message,
+                stack
+            };
+            server.apm.captureError(JSON.stringify(errorMsg));
+
             request.log.error(error);
             return reply.send(400);
         }
@@ -82,7 +128,18 @@ export default fp((server, opts, next) => {
                         message: 'Insert successful!',
                         data,
                     });
-                }).catch(err => {                    
+                }).catch(err => {    
+                    const { message, stack } = err;
+                let errorMsg = {
+
+                    method: request.routerMethod,
+                    path: request.routerPath,
+                    param: request.body,
+                    message,
+                    stack
+                };
+                server.apm.captureError(JSON.stringify(errorMsg));
+                                
                     return reply.code(400).send({
                         success: false,
                         message: 'Error in insert new record.',
@@ -98,6 +155,17 @@ export default fp((server, opts, next) => {
             }
 
         } catch (error) {
+            const { message, stack } = error;
+            let errorMsg = {
+
+                method: request.routerMethod,
+                path: request.routerPath,
+                param: request.body,
+                message,
+                stack
+            };
+            server.apm.captureError(JSON.stringify(errorMsg));
+
             request.log.error(error);
             return reply.send(400);
         }
@@ -108,23 +176,26 @@ export default fp((server, opts, next) => {
             const { name, genre, rating } = request.body;
 
             if (name && genre) {
-                const userDb = MoviesFactory(server.db);
 
-                userDb.create({ name, genre, rating, createdBy: 'dev' })
+                insert(server, request.body)
                     .then(data => {
                         return reply.code(200).send({
                             success: true,
                             message: 'Insert successful!',
-                            data: { name: data.name, rating: data.rating, createdBy: data.createdBy }
+                            data
                         });
                     }).catch(err => {
-                        server.apm.captureError({
+                        const { message, stack } = err;
+                        let errorMsg = {
+
                             method: request.routerMethod,
                             path: request.routerPath,
                             param: request.body,
-                            error: err,
-                        })
-
+                            message,
+                            stack
+                        };
+                        server.apm.captureError(JSON.stringify(errorMsg));
+                        
                         return reply.code(400).send({
                             success: false,
                             message: 'Error in insert new record',
@@ -139,12 +210,16 @@ export default fp((server, opts, next) => {
             }
 
         } catch (error) {
-            server.apm.captureError({
+            const { message, stack } = error;
+            let errorMsg = {
+
                 method: request.routerMethod,
                 path: request.routerPath,
                 param: request.body,
-                error,
-            })
+                message,
+                stack
+            };
+            server.apm.captureError(JSON.stringify(errorMsg));
 
             request.log.error(error);
             return reply.send(400);
@@ -156,25 +231,24 @@ export default fp((server, opts, next) => {
             const { movieId, name, genre, rating } = request.body;
 
             if (movieId) {
-                const userDb = MoviesFactory(server.db);
 
-                userDb.update({ name, genre, rating, lastUpdatedBy: 'devU' }, {
-                    where: {
-                        movieId: movieId
-                    }
-                }).then(data => {
+                update(server, request.body).then(data => {
                     return reply.code(200).send({
                         success: true,
                         message: 'Update successful!',
                         data
                     });
                 }).catch(err => {
-                    server.apm.captureError({
+                    const { message, stack } = err;
+                    let errorMsg = {
+
                         method: request.routerMethod,
                         path: request.routerPath,
                         param: request.body,
-                        error: err,
-                    })
+                        message,
+                        stack
+                    };
+                    server.apm.captureError(JSON.stringify(errorMsg));
 
                     return reply.code(400).send({
                         success: false,
@@ -190,12 +264,16 @@ export default fp((server, opts, next) => {
             }
 
         } catch (error) {
-            server.apm.captureError({
+            const { message, stack } = error;
+            let errorMsg = {
+
                 method: request.routerMethod,
                 path: request.routerPath,
                 param: request.body,
-                error,
-            })
+                message,
+                stack
+            };
+            server.apm.captureError(JSON.stringify(errorMsg));
 
             request.log.error(error);
             return reply.send(400);
@@ -207,26 +285,25 @@ export default fp((server, opts, next) => {
             const { movieId } = request.body;
 
             if (movieId) {
-                const userDb = MoviesFactory(server.db);
 
-                userDb.destroy({
-                    where: {
-                        movieId: movieId
-                    }
-                }).then(data => {
+                deleteMovie(server, request.body).then(data => {
                     return reply.code(200).send({
                         success: true,
                         message: 'Delete successful!',
                         data
                     });
                 }).catch(err => {
-                    server.apm.captureError({
+                    const { message, stack } = err;
+                    let errorMsg = {
+
                         method: request.routerMethod,
                         path: request.routerPath,
                         param: request.body,
-                        error: err,
-                    })
-
+                        message,
+                        stack
+                    };
+                    server.apm.captureError(JSON.stringify(errorMsg));
+                    
                     return reply.code(400).send({
                         success: false,
                         message: 'Error deleting record',
@@ -241,12 +318,16 @@ export default fp((server, opts, next) => {
             }
 
         } catch (error) {
-            server.apm.captureError({
+            const { message, stack } = error;
+            let errorMsg = {
+
                 method: request.routerMethod,
                 path: request.routerPath,
                 param: request.body,
-                error,
-            })
+                message,
+                stack
+            };
+            server.apm.captureError(JSON.stringify(errorMsg));
 
             request.log.error(error);
             return reply.send(400);
@@ -256,9 +337,7 @@ export default fp((server, opts, next) => {
     server.get("/movie/model/getAll", { schema: GetMovieTO }, (request, reply) => {
         try {
 
-            const userDb = MoviesFactory(server.db);
-
-            userDb.findAll()
+            findAll(server)
                 .then(data => {
                     return reply.code(200).send({
                         success: true,
@@ -266,13 +345,17 @@ export default fp((server, opts, next) => {
                         data
                     });
                 }).catch(err => {
-                    server.apm.captureError({
+                    const { message, stack } = err;
+                    let errorMsg = {
+
                         method: request.routerMethod,
                         path: request.routerPath,
                         param: request.body,
-                        error: err,
-                    })
-
+                        message,
+                        stack
+                    };
+                    server.apm.captureError(JSON.stringify(errorMsg));
+                    
                     return reply.code(400).send({
                         success: false,
                         message: 'Error in Inquiry',
@@ -282,12 +365,6 @@ export default fp((server, opts, next) => {
 
 
         } catch (error) {
-            server.apm.captureError({
-                method: request.routerMethod,
-                path: request.routerPath,
-                param: request.body,
-                error,
-            })
 
             request.log.error(error);
             return reply.send(400);
@@ -297,9 +374,7 @@ export default fp((server, opts, next) => {
     server.post("/movie/model/getAll", { schema: GetMovieTO }, (request, reply) => {
         try {
 
-            const userDb = MoviesFactory(server.db);
-
-            userDb.findAll()
+            findAll(server)
                 .then(data => {
                     return reply.code(200).send({
                         success: true,
@@ -307,13 +382,17 @@ export default fp((server, opts, next) => {
                         data
                     });
                 }).catch(err => {
-                    server.apm.captureError({
+                    const { message, stack } = err;
+                    let errorMsg = {
+
                         method: request.routerMethod,
                         path: request.routerPath,
                         param: request.body,
-                        error: err,
-                    })
-
+                        message,
+                        stack
+                    };
+                    server.apm.captureError(JSON.stringify(errorMsg));
+                    
                     return reply.code(400).send({
                         success: false,
                         message: 'Error in Inquiry',
@@ -323,13 +402,79 @@ export default fp((server, opts, next) => {
 
 
         } catch (error) {
-            server.apm.captureError({
+            const { message, stack } = error;
+            let errorMsg = {
+
                 method: request.routerMethod,
                 path: request.routerPath,
                 param: request.body,
-                error,
-            })
+                message,
+                stack
+            };
+            server.apm.captureError(JSON.stringify(errorMsg));
 
+            request.log.error(error);
+            return reply.send(400);
+        }
+    });
+
+    server.post("/movie/kafka/insertAll", { schema: GetMovieTO }, (request, reply) => {
+        try {
+            const topic = "movies";
+            let count = 0;
+            let data = [];
+
+            kafkaSubscribe2(server, topic, (messages) => {
+                count++;
+                data.push(messages);
+
+                if (count == messages.highWaterOffset) {
+                    let movies = [];
+                    for (let i = 0; i < data.length; i++) {
+                        let movieObj = JSON.parse(data[i].value);
+                        movies.push(movieObj);
+                    }
+
+                    insertBulk(server, movies)
+                        .then(data => {
+                            return reply.code(200).send({
+                                success: true,
+                                message: 'Insert All data successful!',
+                                data
+                            });
+                        }).catch(err => {
+                            const { message, stack } = err;
+                            let errorMsg = {
+
+                                method: request.routerMethod,
+                                path: request.routerPath,
+                                param: request.body,
+                                message,
+                                stack
+                            };
+                            server.apm.captureError(JSON.stringify(errorMsg));
+                            
+                            return reply.code(400).send({
+                                success: false,
+                                message: 'Error in insert new records',
+                                data: err,
+                            });
+                        });
+                }
+            });            
+
+        } catch (error) {
+            const { message, stack } = error;
+            let errorMsg = {
+
+                method: request.routerMethod,
+                path: request.routerPath,
+                param: request.body,
+                message,
+                stack
+            };
+            server.apm.captureError(JSON.stringify(errorMsg));
+            
             request.log.error(error);
             return reply.send(400);
         }

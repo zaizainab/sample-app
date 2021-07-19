@@ -10,14 +10,14 @@ import fastifySwagger from "fastify-swagger";
 import AutoLoad from "fastify-autoload";
 // import fastifyAuth from "fastify-auth";
 
-// import apmServer from 'elastic-apm-node';
+import apmServer from 'elastic-apm-node';
 import * as path from "path";
 import * as dotenv from 'dotenv';
 
 // import authPlugin from './plugins/auth';
 import dbPlugin from './plugins/db';
 // import redisPlugin from './plugins/redis';
-// import kafkaPlugin from './plugins/kafka';
+import kafkaPlugin from './plugins/kafka';
 // import kafkaJSPlugin from './plugins/kafkaJS';
 
 dotenv.config({
@@ -32,6 +32,17 @@ const dbHost: string = process.env.DB_HOST;
 const dbPort: any = process.env.DB_PORT;
 const dbUsername: string = process.env.DB_USERNAME;
 const dbPassword: string = process.env.DB_PASSWORD;
+const kafkaHost: string = process.env.KAFKA_HOST;
+const apmUrl: string = process.env.APM_SERVER;
+
+var apm = apmServer.start({
+    // Override service name from package.json
+    serviceName: 'apm-server',
+
+    // Set custom APM Server URL (default: http://localhost:8200)
+    serverUrl: apmUrl,
+    environment: 'development'
+});
 
 export const createServer = () => new Promise((resolve, reject) => {
 
@@ -99,12 +110,37 @@ export const createServer = () => new Promise((resolve, reject) => {
         };
     });
 
+    //apm 
+    server.decorate('apm', apm);
+
     //-----------------------------------------------------
     // decorators
-    server.decorate('conf', { port, dbDialect, db, dbHost, dbPort, dbUsername, dbPassword });
+    server.decorate('conf', { port, dbDialect, db, dbHost, dbPort, dbUsername, dbPassword, kafkaHost });
 
     // plugin
     server.register(dbPlugin);
+    server.register(kafkaPlugin);
+    //-----------------------------------------------------
+    
+    server.addHook('onRequest', async (request, reply, error) => {
+        apm.setTransactionName(request.method + ' ' + request.url);
+    });
+
+    // global hook error handling for unhandled error
+    server.addHook('onError', async (request, reply, error) => {
+        const { message, stack } = error;
+        let err = {
+
+            method: request.routerMethod,
+            path: request.routerPath,
+            param: request.body,
+            message,
+            stack
+        };
+
+        apm.captureError(JSON.stringify(err));
+    });
+
 
     // main
     const start = async () => {

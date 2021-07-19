@@ -42,13 +42,13 @@ const fastify_swagger_1 = __importDefault(require("fastify-swagger"));
 // import fastifyCors from "fastify-cors";
 const fastify_autoload_1 = __importDefault(require("fastify-autoload"));
 // import fastifyAuth from "fastify-auth";
-// import apmServer from 'elastic-apm-node';
+const elastic_apm_node_1 = __importDefault(require("elastic-apm-node"));
 const path = __importStar(require("path"));
 const dotenv = __importStar(require("dotenv"));
 // import authPlugin from './plugins/auth';
 const db_1 = __importDefault(require("./plugins/db"));
 // import redisPlugin from './plugins/redis';
-// import kafkaPlugin from './plugins/kafka';
+const kafka_1 = __importDefault(require("./plugins/kafka"));
 // import kafkaJSPlugin from './plugins/kafkaJS';
 dotenv.config({
     path: path.resolve('.env'),
@@ -61,6 +61,15 @@ const dbHost = process.env.DB_HOST;
 const dbPort = process.env.DB_PORT;
 const dbUsername = process.env.DB_USERNAME;
 const dbPassword = process.env.DB_PASSWORD;
+const kafkaHost = process.env.KAFKA_HOST;
+const apmUrl = process.env.APM_SERVER;
+var apm = elastic_apm_node_1.default.start({
+    // Override service name from package.json
+    serviceName: 'apm-server',
+    // Set custom APM Server URL (default: http://localhost:8200)
+    serverUrl: apmUrl,
+    environment: 'development'
+});
 const createServer = () => new Promise((resolve, reject) => {
     const server = fastify_1.fastify({
         ignoreTrailingSlash: true,
@@ -118,11 +127,30 @@ const createServer = () => new Promise((resolve, reject) => {
             hello: 'world'
         };
     }));
+    //apm 
+    server.decorate('apm', apm);
     //-----------------------------------------------------
     // decorators
-    server.decorate('conf', { port, dbDialect, db, dbHost, dbPort, dbUsername, dbPassword });
+    server.decorate('conf', { port, dbDialect, db, dbHost, dbPort, dbUsername, dbPassword, kafkaHost });
     // plugin
     server.register(db_1.default);
+    server.register(kafka_1.default);
+    //-----------------------------------------------------
+    server.addHook('onRequest', (request, reply, error) => __awaiter(void 0, void 0, void 0, function* () {
+        apm.setTransactionName(request.method + ' ' + request.url);
+    }));
+    // global hook error handling for unhandled error
+    server.addHook('onError', (request, reply, error) => __awaiter(void 0, void 0, void 0, function* () {
+        const { message, stack } = error;
+        let err = {
+            method: request.routerMethod,
+            path: request.routerPath,
+            param: request.body,
+            message,
+            stack
+        };
+        apm.captureError(JSON.stringify(err));
+    }));
     // main
     const start = () => __awaiter(void 0, void 0, void 0, function* () {
         try {

@@ -43,7 +43,7 @@ const dbPlugin = (async (server, opts, next) => {
                 };
 
                 server.apm.captureError(JSON.stringify(err));
-                done()
+                done();
             });
     });
 

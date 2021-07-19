@@ -6,7 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fastify_plugin_1 = __importDefault(require("fastify-plugin"));
 const sequelize_1 = __importDefault(require("sequelize"));
 const schema_1 = require("./schema");
-const movie_1 = require("../../../plugins/db/models/movie");
+const movie_service_1 = require("../../services/movie-service");
+const consumer_1 = require("../../../plugins/kafka/consumer");
 exports.default = fastify_plugin_1.default((server, opts, next) => {
     server.get("/movie/getAll", { schema: schema_1.GetMovieTO }, (request, reply) => {
         try {
@@ -21,6 +22,15 @@ exports.default = fastify_plugin_1.default((server, opts, next) => {
                     data
                 });
             }).catch((err) => {
+                const { message, stack } = err;
+                let errorMsg = {
+                    method: request.routerMethod,
+                    path: request.routerPath,
+                    param: request.body,
+                    message,
+                    stack
+                };
+                server.apm.captureError(JSON.stringify(errorMsg));
                 return reply.code(400).send({
                     success: false,
                     message: 'Error get data movies.',
@@ -29,6 +39,15 @@ exports.default = fastify_plugin_1.default((server, opts, next) => {
             });
         }
         catch (error) {
+            const { message, stack } = error;
+            let errorMsg = {
+                method: request.routerMethod,
+                path: request.routerPath,
+                param: request.body,
+                message,
+                stack
+            };
+            server.apm.captureError(JSON.stringify(errorMsg));
             request.log.error(error);
             return reply.send(400);
         }
@@ -46,6 +65,15 @@ exports.default = fastify_plugin_1.default((server, opts, next) => {
                     data,
                 });
             }).catch(err => {
+                const { message, stack } = err;
+                let errorMsg = {
+                    method: request.routerMethod,
+                    path: request.routerPath,
+                    param: request.body,
+                    message,
+                    stack
+                };
+                server.apm.captureError(JSON.stringify(errorMsg));
                 return reply.code(400).send({
                     success: false,
                     message: 'Error in insert new record.',
@@ -54,6 +82,15 @@ exports.default = fastify_plugin_1.default((server, opts, next) => {
             });
         }
         catch (error) {
+            const { message, stack } = error;
+            let errorMsg = {
+                method: request.routerMethod,
+                path: request.routerPath,
+                param: request.body,
+                message,
+                stack
+            };
+            server.apm.captureError(JSON.stringify(errorMsg));
             request.log.error(error);
             return reply.send(400);
         }
@@ -77,6 +114,15 @@ exports.default = fastify_plugin_1.default((server, opts, next) => {
                         data,
                     });
                 }).catch(err => {
+                    const { message, stack } = err;
+                    let errorMsg = {
+                        method: request.routerMethod,
+                        path: request.routerPath,
+                        param: request.body,
+                        message,
+                        stack
+                    };
+                    server.apm.captureError(JSON.stringify(errorMsg));
                     return reply.code(400).send({
                         success: false,
                         message: 'Error in insert new record.',
@@ -92,6 +138,15 @@ exports.default = fastify_plugin_1.default((server, opts, next) => {
             }
         }
         catch (error) {
+            const { message, stack } = error;
+            let errorMsg = {
+                method: request.routerMethod,
+                path: request.routerPath,
+                param: request.body,
+                message,
+                stack
+            };
+            server.apm.captureError(JSON.stringify(errorMsg));
             request.log.error(error);
             return reply.send(400);
         }
@@ -100,21 +155,23 @@ exports.default = fastify_plugin_1.default((server, opts, next) => {
         try {
             const { name, genre, rating } = request.body;
             if (name && genre) {
-                const userDb = movie_1.MoviesFactory(server.db);
-                userDb.create({ name, genre, rating, createdBy: 'dev' })
+                movie_service_1.insert(server, request.body)
                     .then(data => {
                     return reply.code(200).send({
                         success: true,
                         message: 'Insert successful!',
-                        data: { name: data.name, rating: data.rating, createdBy: data.createdBy }
+                        data
                     });
                 }).catch(err => {
-                    server.apm.captureError({
+                    const { message, stack } = err;
+                    let errorMsg = {
                         method: request.routerMethod,
                         path: request.routerPath,
                         param: request.body,
-                        error: err,
-                    });
+                        message,
+                        stack
+                    };
+                    server.apm.captureError(JSON.stringify(errorMsg));
                     return reply.code(400).send({
                         success: false,
                         message: 'Error in insert new record',
@@ -130,12 +187,15 @@ exports.default = fastify_plugin_1.default((server, opts, next) => {
             }
         }
         catch (error) {
-            server.apm.captureError({
+            const { message, stack } = error;
+            let errorMsg = {
                 method: request.routerMethod,
                 path: request.routerPath,
                 param: request.body,
-                error,
-            });
+                message,
+                stack
+            };
+            server.apm.captureError(JSON.stringify(errorMsg));
             request.log.error(error);
             return reply.send(400);
         }
@@ -144,24 +204,22 @@ exports.default = fastify_plugin_1.default((server, opts, next) => {
         try {
             const { movieId, name, genre, rating } = request.body;
             if (movieId) {
-                const userDb = movie_1.MoviesFactory(server.db);
-                userDb.update({ name, genre, rating, lastUpdatedBy: 'devU' }, {
-                    where: {
-                        movieId: movieId
-                    }
-                }).then(data => {
+                movie_service_1.update(server, request.body).then(data => {
                     return reply.code(200).send({
                         success: true,
                         message: 'Update successful!',
                         data
                     });
                 }).catch(err => {
-                    server.apm.captureError({
+                    const { message, stack } = err;
+                    let errorMsg = {
                         method: request.routerMethod,
                         path: request.routerPath,
                         param: request.body,
-                        error: err,
-                    });
+                        message,
+                        stack
+                    };
+                    server.apm.captureError(JSON.stringify(errorMsg));
                     return reply.code(400).send({
                         success: false,
                         message: 'Error updating record',
@@ -177,12 +235,15 @@ exports.default = fastify_plugin_1.default((server, opts, next) => {
             }
         }
         catch (error) {
-            server.apm.captureError({
+            const { message, stack } = error;
+            let errorMsg = {
                 method: request.routerMethod,
                 path: request.routerPath,
                 param: request.body,
-                error,
-            });
+                message,
+                stack
+            };
+            server.apm.captureError(JSON.stringify(errorMsg));
             request.log.error(error);
             return reply.send(400);
         }
@@ -191,24 +252,22 @@ exports.default = fastify_plugin_1.default((server, opts, next) => {
         try {
             const { movieId } = request.body;
             if (movieId) {
-                const userDb = movie_1.MoviesFactory(server.db);
-                userDb.destroy({
-                    where: {
-                        movieId: movieId
-                    }
-                }).then(data => {
+                movie_service_1.deleteMovie(server, request.body).then(data => {
                     return reply.code(200).send({
                         success: true,
                         message: 'Delete successful!',
                         data
                     });
                 }).catch(err => {
-                    server.apm.captureError({
+                    const { message, stack } = err;
+                    let errorMsg = {
                         method: request.routerMethod,
                         path: request.routerPath,
                         param: request.body,
-                        error: err,
-                    });
+                        message,
+                        stack
+                    };
+                    server.apm.captureError(JSON.stringify(errorMsg));
                     return reply.code(400).send({
                         success: false,
                         message: 'Error deleting record',
@@ -224,20 +283,22 @@ exports.default = fastify_plugin_1.default((server, opts, next) => {
             }
         }
         catch (error) {
-            server.apm.captureError({
+            const { message, stack } = error;
+            let errorMsg = {
                 method: request.routerMethod,
                 path: request.routerPath,
                 param: request.body,
-                error,
-            });
+                message,
+                stack
+            };
+            server.apm.captureError(JSON.stringify(errorMsg));
             request.log.error(error);
             return reply.send(400);
         }
     });
     server.get("/movie/model/getAll", { schema: schema_1.GetMovieTO }, (request, reply) => {
         try {
-            const userDb = movie_1.MoviesFactory(server.db);
-            userDb.findAll()
+            movie_service_1.findAll(server)
                 .then(data => {
                 return reply.code(200).send({
                     success: true,
@@ -245,12 +306,15 @@ exports.default = fastify_plugin_1.default((server, opts, next) => {
                     data
                 });
             }).catch(err => {
-                server.apm.captureError({
+                const { message, stack } = err;
+                let errorMsg = {
                     method: request.routerMethod,
                     path: request.routerPath,
                     param: request.body,
-                    error: err,
-                });
+                    message,
+                    stack
+                };
+                server.apm.captureError(JSON.stringify(errorMsg));
                 return reply.code(400).send({
                     success: false,
                     message: 'Error in Inquiry',
@@ -259,20 +323,13 @@ exports.default = fastify_plugin_1.default((server, opts, next) => {
             });
         }
         catch (error) {
-            server.apm.captureError({
-                method: request.routerMethod,
-                path: request.routerPath,
-                param: request.body,
-                error,
-            });
             request.log.error(error);
             return reply.send(400);
         }
     });
     server.post("/movie/model/getAll", { schema: schema_1.GetMovieTO }, (request, reply) => {
         try {
-            const userDb = movie_1.MoviesFactory(server.db);
-            userDb.findAll()
+            movie_service_1.findAll(server)
                 .then(data => {
                 return reply.code(200).send({
                     success: true,
@@ -280,12 +337,15 @@ exports.default = fastify_plugin_1.default((server, opts, next) => {
                     data
                 });
             }).catch(err => {
-                server.apm.captureError({
+                const { message, stack } = err;
+                let errorMsg = {
                     method: request.routerMethod,
                     path: request.routerPath,
                     param: request.body,
-                    error: err,
-                });
+                    message,
+                    stack
+                };
+                server.apm.captureError(JSON.stringify(errorMsg));
                 return reply.code(400).send({
                     success: false,
                     message: 'Error in Inquiry',
@@ -294,12 +354,69 @@ exports.default = fastify_plugin_1.default((server, opts, next) => {
             });
         }
         catch (error) {
-            server.apm.captureError({
+            const { message, stack } = error;
+            let errorMsg = {
                 method: request.routerMethod,
                 path: request.routerPath,
                 param: request.body,
-                error,
+                message,
+                stack
+            };
+            server.apm.captureError(JSON.stringify(errorMsg));
+            request.log.error(error);
+            return reply.send(400);
+        }
+    });
+    server.post("/movie/kafka/insertAll", { schema: schema_1.GetMovieTO }, (request, reply) => {
+        try {
+            const topic = "movies";
+            let count = 0;
+            let data = [];
+            consumer_1.kafkaSubscribe2(server, topic, (messages) => {
+                count++;
+                data.push(messages);
+                if (count == messages.highWaterOffset) {
+                    let movies = [];
+                    for (let i = 0; i < data.length; i++) {
+                        let movieObj = JSON.parse(data[i].value);
+                        movies.push(movieObj);
+                    }
+                    movie_service_1.insertBulk(server, movies)
+                        .then(data => {
+                        return reply.code(200).send({
+                            success: true,
+                            message: 'Insert All data successful!',
+                            data
+                        });
+                    }).catch(err => {
+                        const { message, stack } = err;
+                        let errorMsg = {
+                            method: request.routerMethod,
+                            path: request.routerPath,
+                            param: request.body,
+                            message,
+                            stack
+                        };
+                        server.apm.captureError(JSON.stringify(errorMsg));
+                        return reply.code(400).send({
+                            success: false,
+                            message: 'Error in insert new records',
+                            data: err,
+                        });
+                    });
+                }
             });
+        }
+        catch (error) {
+            const { message, stack } = error;
+            let errorMsg = {
+                method: request.routerMethod,
+                path: request.routerPath,
+                param: request.body,
+                message,
+                stack
+            };
+            server.apm.captureError(JSON.stringify(errorMsg));
             request.log.error(error);
             return reply.send(400);
         }
