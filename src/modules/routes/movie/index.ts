@@ -2,7 +2,7 @@ import fp from 'fastify-plugin';
 import Sequelize from 'sequelize';
 
 import { MovieTO, GetMovieTO, UpdateMovieTO, DeleteMovieTO } from './schema';
-import { MoviesFactory } from '../../../plugins/db/models/movie';
+import { MoviesAttributes, MoviesFactory } from '../../../plugins/db/models/movie';
 import { deleteMovie, findAll, insert, insertBulk, update } from '../../services/movie-service';
 import { kafkaSubscribe2 } from '../../../plugins/kafka/consumer';
 
@@ -429,10 +429,19 @@ export default fp((server, opts, next) => {
                 data.push(messages);
 
                 if (count == messages.highWaterOffset) {
-                    let movies = [];
+                    let movies = [];                    
+
                     for (let i = 0; i < data.length; i++) {
-                        let movieObj = JSON.parse(data[i].value);
-                        movies.push(movieObj);
+                        const movieObj = JSON.parse(data[i].value);
+
+                        const movie: MoviesAttributes = {
+                            name: movieObj.name,
+                            genre: movieObj.genre,
+                            rating: movieObj.rating,
+                            createdBy: 'dev'
+                        };
+
+                        movies.push(movie);
                     }
 
                     insertBulk(server, movies)

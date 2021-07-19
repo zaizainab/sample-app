@@ -1,8 +1,9 @@
 import fp from 'fastify-plugin';
 
-import { PublishKafkaTO, SubscribeKafkaTO, TopicKafkaTO } from './schema';
+import { PublishKafkaTO, PublishMoviesKafkaTO, SubscribeKafkaTO, TopicKafkaTO } from './schema';
 import { kafkaSubscribe2 } from '../../../plugins/kafka/consumer';
 import { createTopic, publish } from '../../../plugins/kafka/producer';
+import { MoviesAttributes } from 'plugins/db/models/movie';
 
 
 export default fp((server, opts, next) => {
@@ -77,6 +78,42 @@ export default fp((server, opts, next) => {
             const { topic, messages } = request.body;
 
             publish(server, topic, messages).then((response) => {
+                return reply.code(200).send({
+                    success: true,
+                    message: 'Publish message successful!',
+                    data: response 
+                });
+            });
+
+        } catch (error) {
+            const { message, stack } = error;
+            let errorMsg = {
+
+                method: request.routerMethod,
+                path: request.routerPath,
+                param: request.body,
+                message,
+                stack
+            };
+            server.apm.captureError(JSON.stringify(errorMsg));
+
+            request.log.error(error);
+            return reply.send(400);
+        }
+    });
+
+    server.post("/movie/kafka/publish", { schema: PublishMoviesKafkaTO }, (request, reply) => {
+        try {
+            const { name, genre, rating } = request.body;
+
+            const messages: MoviesAttributes = {
+                name: name,
+                genre: genre,
+                rating: rating,
+                createdBy: 'dev',
+            };
+
+            publish(server, 'movies', JSON.stringify(messages)).then((response) => {
                 return reply.code(200).send({
                     success: true,
                     message: 'Publish message successful!',

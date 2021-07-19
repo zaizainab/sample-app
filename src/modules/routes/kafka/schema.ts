@@ -89,3 +89,28 @@ export const SubscribeKafkaTO = {
         }
     }
 }
+
+export const PublishMoviesKafkaTO = {
+    description: 'movies kafka',
+    tags: ['kafka'],
+    summary: 'Publish to topic movies',
+    body: {
+        type: 'object',
+        properties: {
+            name: { type: 'string' },
+            genre: { type: 'string' },
+            rating: { type: 'number' },
+        }
+    },
+    response: {
+        200: {
+            description: 'Successful response',
+            type: 'object',
+            properties: {
+                success: { type: 'string' },
+                message: { type: 'string' },
+                data: { type: 'object' },
+            }
+        }
+    }
+}
