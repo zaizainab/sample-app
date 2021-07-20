@@ -33,7 +33,7 @@ const dbPort: any = process.env.DB_PORT;
 const dbUsername: string = process.env.DB_USERNAME;
 const dbPassword: string = process.env.DB_PASSWORD;
 const kafkaHost: string = process.env.KAFKA_HOST;
-const apmUrl: string = process.env.APM_SERVER;
+const apmUrl: string = process.env.APM_URL;
 
 var apm = apmServer.start({
     // Override service name from package.json

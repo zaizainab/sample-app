@@ -14,6 +14,13 @@ createServer()
             server.log.info('Server not connected to Kafka');
         });
 
+        const apmServerStatus = server.apm.isStarted();
+        if (apmServerStatus) {
+            server.log.info('Server connected to APM Server');
+        } else {
+            server.log.info('Server not connected to APM Server');
+        }
+
     }).catch(error => {
         // do something
         console.log(error);

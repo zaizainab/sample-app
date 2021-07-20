@@ -130,15 +130,15 @@ export default fp((server, opts, next) => {
                     });
                 }).catch(err => {    
                     const { message, stack } = err;
-                let errorMsg = {
+                    let errorMsg = {
 
-                    method: request.routerMethod,
-                    path: request.routerPath,
-                    param: request.body,
-                    message,
-                    stack
-                };
-                server.apm.captureError(JSON.stringify(errorMsg));
+                        method: request.routerMethod,
+                        path: request.routerPath,
+                        param: request.body,
+                        message,
+                        stack
+                    };
+                    server.apm.captureError(JSON.stringify(errorMsg));
                                 
                     return reply.code(400).send({
                         success: false,
@@ -148,9 +148,19 @@ export default fp((server, opts, next) => {
                 });
 
             } else {
+                const message = 'Insert failed! Please check the request';
+                let errorMsg = {
+
+                    method: request.routerMethod,
+                    path: request.routerPath,
+                    param: request.body,
+                    message,
+                };
+                server.apm.captureError(JSON.stringify(errorMsg));
+
                 return reply.code(400).send({
                     success: false,
-                    message: 'Insert failed! Please check the request.'
+                    message
                 });
             }
 
@@ -203,9 +213,19 @@ export default fp((server, opts, next) => {
                         });
                     });
             } else {
+                const message = 'Insert failed! Please check the request';
+                let errorMsg = {
+
+                    method: request.routerMethod,
+                    path: request.routerPath,
+                    param: request.body,
+                    message,
+                };
+                server.apm.captureError(JSON.stringify(errorMsg));
+
                 return reply.code(400).send({
                     success: false,
-                    message: 'Insert failed! Please check the request'
+                    message
                 });
             }
 
@@ -257,9 +277,19 @@ export default fp((server, opts, next) => {
                     });
                 });
             } else {
+                const message = 'Update failed! Please check the request';
+                let errorMsg = {
+
+                    method: request.routerMethod,
+                    path: request.routerPath,
+                    param: request.body,
+                    message,
+                };
+                server.apm.captureError(JSON.stringify(errorMsg));
+
                 return reply.code(400).send({
                     success: false,
-                    message: 'Update failed! Please check the request'
+                    message
                 });
             }
 
@@ -311,9 +341,19 @@ export default fp((server, opts, next) => {
                     });
                 });
             } else {
+                const message = 'Delete failed! Please check the request';
+                let errorMsg = {
+
+                    method: request.routerMethod,
+                    path: request.routerPath,
+                    param: request.body,
+                    message,
+                };
+                server.apm.captureError(JSON.stringify(errorMsg));
+
                 return reply.code(400).send({
                     success: false,
-                    message: 'Insert failed! Please check the request'
+                    message
                 });
             }
 
