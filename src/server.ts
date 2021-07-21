@@ -5,7 +5,7 @@ import { fastify } from 'fastify';
 import fastifyBlipp from "fastify-blipp";
 import fastifySwagger from "fastify-swagger";
 // import fastifySchedule from "fastify-schedule";
-// import fastifyJwt from "fastify-jwt";
+import fastifyJwt from "fastify-jwt";
 // import fastifyCors from "fastify-cors";
 import AutoLoad from "fastify-autoload";
 // import fastifyAuth from "fastify-auth";
@@ -16,8 +16,8 @@ import * as dotenv from 'dotenv';
 
 // import authPlugin from './plugins/auth';
 import dbPlugin from './plugins/db';
-// import redisPlugin from './plugins/redis';
 import kafkaPlugin from './plugins/kafka';
+import redisPlugin from './plugins/redis';
 // import kafkaJSPlugin from './plugins/kafkaJS';
 
 dotenv.config({
@@ -34,6 +34,11 @@ const dbUsername: string = process.env.DB_USERNAME;
 const dbPassword: string = process.env.DB_PASSWORD;
 const kafkaHost: string = process.env.KAFKA_HOST;
 const apmUrl: string = process.env.APM_URL;
+
+const secretKey: string = process.env.SECRET;
+const expireToken = process.env.EXPIRE_TOKEN;
+const redisPort: any = process.env.REDIS_PORT;
+const redistHost: string = process.env.REDIS_HOST;
 
 var apm = apmServer.start({
     // Override service name from package.json
@@ -92,12 +97,8 @@ export const createServer = () => new Promise((resolve, reject) => {
         exposeRoute: true
     });
 
-    // redis
-    // server.register(fastifyRedis, {
-    //     host: redistHost,
-    //     port: redisPort,
-    //     closeClient: true
-    // });
+    // jwt
+    server.register(fastifyJwt, { secret: secretKey });
 
     // auto register all routes 
     server.register(AutoLoad, {
@@ -115,11 +116,14 @@ export const createServer = () => new Promise((resolve, reject) => {
 
     //-----------------------------------------------------
     // decorators
-    server.decorate('conf', { port, dbDialect, db, dbHost, dbPort, dbUsername, dbPassword, kafkaHost });
+    server.decorate('conf', { port, dbDialect, db, dbHost, dbPort, dbUsername, dbPassword, kafkaHost, 
+        secretKey, expireToken, redisPort, redistHost });
 
     // plugin
     server.register(dbPlugin);
     server.register(kafkaPlugin);
+    server.register(redisPlugin);
+    // server.register(authPlugin);
     //-----------------------------------------------------
     
     server.addHook('onRequest', async (request, reply, error) => {

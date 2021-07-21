@@ -11,6 +11,19 @@ export const findAll = (server) => new Promise((resolve, reject) => {
         });
 });
 
+export const getLastMovie = (server) => new Promise((resolve, reject) => {
+    const moviesDb = MoviesFactory(server.db);
+
+    moviesDb.findOne({ order: [ 
+            ['movieId', 'DESC'], 
+        ]})
+        .then(data => {
+                resolve({ data: data });
+        }).catch(err => {
+            reject(err);
+        });
+});
+
 export const insert = (server, body) => new Promise((resolve, reject) => {
     const moviesDb = MoviesFactory(server.db);
     const { name, genre, rating } = body;

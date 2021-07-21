@@ -2,7 +2,7 @@
 import fp from 'fastify-plugin'
 import { KafkaClient, KafkaClientOptions } from 'kafka-node';
 
-import { kafkaConfig } from './config'
+import { kafkaConfig } from './config';
 
 const kafkaPlugin = (async (server, opts, next) => {
 

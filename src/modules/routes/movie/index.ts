@@ -1,10 +1,11 @@
 import fp from 'fastify-plugin';
 import Sequelize from 'sequelize';
 
-import { MovieTO, GetMovieTO, UpdateMovieTO, DeleteMovieTO } from './schema';
+import { MovieTO, GetMovieTO, UpdateMovieTO, DeleteMovieTO, MovieRedisTO } from './schema';
 import { MoviesAttributes, MoviesFactory } from '../../../plugins/db/models/movie';
-import { deleteMovie, findAll, insert, insertBulk, update } from '../../services/movie-service';
+import { deleteMovie, findAll, getLastMovie, insert, insertBulk, update } from '../../services/movie-service';
 import { kafkaSubscribe2 } from '../../../plugins/kafka/consumer';
+import { RedisOperation } from '../../services/redis-service';
 
 
 export default fp((server, opts, next) => {
@@ -524,6 +525,119 @@ export default fp((server, opts, next) => {
             };
             server.apm.captureError(JSON.stringify(errorMsg));
             
+            request.log.error(error);
+            return reply.send(400);
+        }
+    });
+
+    server.post("/movie/redis/addMovieToList", { schema: MovieRedisTO }, (request, reply) => {
+        try {
+            const redis = new RedisOperation(server);
+            let movie = [];
+
+            getLastMovie(server)
+                .then(data => {
+                    // const dv = data.dataValues;
+                    const value = JSON.stringify(data);
+
+                    redis.setValueToList('lastMovie', value)
+                        .then(res => {
+                            return reply.code(200).send({
+                                success: true,
+                                message: res,
+                                res
+                            });
+                        })
+                        .catch(error => {
+                            return reply.code(400).send({
+                                success: false,
+                                message: error
+                            });
+                        });
+                }).catch(err => {
+                    const { message, stack } = err;
+                    let errorMsg = {
+
+                        method: request.routerMethod,
+                        path: request.routerPath,
+                        param: request.body,
+                        message,
+                        stack
+                    };
+                    server.apm.captureError(JSON.stringify(errorMsg));
+                    
+                    return reply.code(400).send({
+                        success: false,
+                        message: 'Error in getLastMovie',
+                        data: err,
+                    });
+                });
+
+            
+        } catch (error) {
+            server.apm.captureError({
+                method: request.routerMethod,
+                path: request.routerPath,
+                param: request.body,
+                error,
+            })
+
+            request.log.error(error);
+            return reply.send(400);
+        }
+    });
+
+    server.post("/movie/redis/getLastMovie", { schema: MovieRedisTO }, (request, reply) => {
+        try {
+            const redis = new RedisOperation(server);
+
+            getLastMovie(server)
+                .then(data => {
+                    // const dv = data.dataValues;
+                    const value = JSON.stringify(data);
+
+                    redis.getValue('lastMovie')
+                        .then(res => {
+                            return reply.code(200).send({
+                                success: true,
+                                message: 'Get lastMovie successful!',
+                                data: JSON.parse(res[0]),
+                            });
+                        })
+                        .catch(error => {
+                            return reply.code(400).send({
+                                success: false,
+                                message: error
+                            });
+                        });
+                }).catch(err => {
+                    const { message, stack } = err;
+                    let errorMsg = {
+
+                        method: request.routerMethod,
+                        path: request.routerPath,
+                        param: request.body,
+                        message,
+                        stack
+                    };
+                    server.apm.captureError(JSON.stringify(errorMsg));
+                    
+                    return reply.code(400).send({
+                        success: false,
+                        message: 'Error in getLastMovie',
+                        data: err,
+                    });
+                });
+
+            
+        } catch (error) {
+            server.apm.captureError({
+                method: request.routerMethod,
+                path: request.routerPath,
+                param: request.body,
+                error,
+            })
+
             request.log.error(error);
             return reply.send(400);
         }

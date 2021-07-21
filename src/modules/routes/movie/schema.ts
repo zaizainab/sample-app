@@ -112,3 +112,37 @@ export const DeleteMovieTO = {
         }
     }
 };
+
+export const MovieRedisTO = {
+    description: 'Redis',
+    tags: ['Redis'],
+    summary: 'add movie data to redis',
+    // body: {
+    //     type: 'object',
+    //     properties: {
+    //         key: { type: 'string' },
+    //         value: { type: 'string' },
+    //     }
+    // },
+    response: {
+        200: {
+            description: 'Successful response',
+            type: 'object',
+            properties: {
+                success: { type: 'boolean' },
+                data: { 
+                    data: {
+                        movieId: { type: 'string' },
+                        name: { type: 'string' },
+                        genre: { type: 'string' },
+                        rating: { type: 'number' },
+                        createdDate: { type: 'date'},
+                        createdBy: { type: 'string' },
+                        LastUpdatedDate: { type: 'date' },
+                        LastUpdatedBy: { type: 'string' },
+                    },
+                 },
+            }
+        }
+    }
+}

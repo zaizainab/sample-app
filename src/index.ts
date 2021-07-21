@@ -1,5 +1,4 @@
-import { FastifyInstance } from "fastify";
-import { createServer } from './server'
+import { createServer } from './server';
 
 createServer()
     .then((server: any) => {
@@ -12,6 +11,15 @@ createServer()
 
         server.kafkaClient.on('error', (err) => {
             server.log.info('Server not connected to Kafka');
+        });
+
+        server.redis.set('test', 'Connected', "EX", server.conf.expireToken, (err, val) => {
+            if (err) {
+                server.log.info('Failed to establish Redis Connection.');
+                server.log.error(JSON.stringify(err));
+            } else {
+                server.log.info('Redis Connection has been established successfully.');
+            }
         });
 
         const apmServerStatus = server.apm.isStarted();
