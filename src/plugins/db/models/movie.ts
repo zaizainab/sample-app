@@ -1,6 +1,6 @@
 
 import { BuildOptions, DataTypes, Model, Sequelize } from "sequelize";
-import internal from "stream";
+// import internal from "stream";
 
 export interface MoviesAttributes {
     movieId?: string;
@@ -36,9 +36,9 @@ const movies = {
 };
 
 
-export const MoviesFactory = (sequalize: Sequelize): MoviesStatic => {
+export const MoviesFactory = (sequelize: Sequelize): MoviesStatic => {
     const attributes = movies;
-    return <MoviesStatic>sequalize.define("Movies", attributes, {
+    return <MoviesStatic>sequelize.define("Movies", attributes, {
         // don't add the timestamp attributes (updatedAt, createdAt)
         timestamps: true,
 

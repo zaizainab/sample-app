@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --json --outputFile=src/__test__/output.json",
+    "test:dev": "npm run test --watch",
     "clean": "rm -rf build/",
     "clean:windows": "rmdir build /s /q",
     "build:dev": "tsc -w",
@@ -25,13 +26,22 @@
     "fastify-jwt": "^3.0.0",
     "fastify-plugin": "^3.0.0",
     "fastify-redis": "^4.3.1",
+    "fastify-schedule": "^1.0.0",
     "fastify-swagger": "^4.8.3",
     "kafka-node": "^5.0.0",
     "nodemon": "^2.0.12",
     "pino-pretty": "^5.1.1",
     "sequelize": "^6.6.5",
     "tedious": "^11.0.9",
+    "toad-scheduler": "^1.5.0",
     "ts-node": "^10.1.0",
     "typescript": "^4.3.5"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.24",
+    "jest": "^27.0.6",
+    "prettier": "2.3.2",
+    "sequelize-mock": "^0.10.2",
+    "ts-jest": "^27.0.3"
   }
 }

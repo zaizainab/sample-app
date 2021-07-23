@@ -4,7 +4,7 @@
 import { fastify } from 'fastify';
 import fastifyBlipp from "fastify-blipp";
 import fastifySwagger from "fastify-swagger";
-// import fastifySchedule from "fastify-schedule";
+import fastifySchedule from "fastify-schedule";
 import fastifyJwt from "fastify-jwt";
 // import fastifyCors from "fastify-cors";
 import AutoLoad from "fastify-autoload";
@@ -18,6 +18,7 @@ import * as dotenv from 'dotenv';
 import dbPlugin from './plugins/db';
 import kafkaPlugin from './plugins/kafka';
 import redisPlugin from './plugins/redis';
+// import scheduler from './plugins/scheduler';
 // import kafkaJSPlugin from './plugins/kafkaJS';
 
 dotenv.config({
@@ -100,6 +101,15 @@ export const createServer = () => new Promise((resolve, reject) => {
     // jwt
     server.register(fastifyJwt, { secret: secretKey });
 
+    //scheduler
+    server.register(fastifySchedule);
+
+    // plugin
+    server.register(dbPlugin);
+    server.register(kafkaPlugin);
+    server.register(redisPlugin);
+    // server.register(scheduler);
+
     // auto register all routes 
     server.register(AutoLoad, {
         dir: path.join(__dirname, 'modules/routes')
@@ -119,10 +129,6 @@ export const createServer = () => new Promise((resolve, reject) => {
     server.decorate('conf', { port, dbDialect, db, dbHost, dbPort, dbUsername, dbPassword, kafkaHost, 
         secretKey, expireToken, redisPort, redistHost });
 
-    // plugin
-    server.register(dbPlugin);
-    server.register(kafkaPlugin);
-    server.register(redisPlugin);
     // server.register(authPlugin);
     //-----------------------------------------------------
     

@@ -3,12 +3,13 @@ import Sequelize from 'sequelize';
 
 import { MovieTO, GetMovieTO, UpdateMovieTO, DeleteMovieTO, MovieRedisTO } from './schema';
 import { MoviesAttributes, MoviesFactory } from '../../../plugins/db/models/movie';
-import { deleteMovie, findAll, getLastMovie, insert, insertBulk, update } from '../../services/movie-service';
+import { MovieService } from '../../services/movieService';
 import { kafkaSubscribe2 } from '../../../plugins/kafka/consumer';
-import { RedisOperation } from '../../services/redis-service';
+import { RedisOperation } from '../../services/redisService';
 
 
 export default fp((server, opts, next) => {
+    const movieService = new MovieService(server.db);
 
     server.get("/movie/getAll", { schema: GetMovieTO }, (request, reply) => {
         try {
@@ -188,7 +189,7 @@ export default fp((server, opts, next) => {
 
             if (name && genre) {
 
-                insert(server, request.body)
+                movieService.insert(request.body)
                     .then(data => {
                         return reply.code(200).send({
                             success: true,
@@ -249,11 +250,11 @@ export default fp((server, opts, next) => {
 
     server.post("/movie/model/update", { schema: UpdateMovieTO }, (request, reply) => {
         try {
-            const { movieId, name, genre, rating } = request.body;
+            const { movieId } = request.body;
 
             if (movieId) {
 
-                update(server, request.body).then(data => {
+                movieService.update(request.body).then(data => {
                     return reply.code(200).send({
                         success: true,
                         message: 'Update successful!',
@@ -317,7 +318,7 @@ export default fp((server, opts, next) => {
 
             if (movieId) {
 
-                deleteMovie(server, request.body).then(data => {
+                movieService.deleteMovie(request.body).then(data => {
                     return reply.code(200).send({
                         success: true,
                         message: 'Delete successful!',
@@ -378,7 +379,7 @@ export default fp((server, opts, next) => {
     server.get("/movie/model/getAll", { schema: GetMovieTO }, (request, reply) => {
         try {
 
-            findAll(server)
+            movieService.findAll()
                 .then(data => {
                     return reply.code(200).send({
                         success: true,
@@ -412,10 +413,11 @@ export default fp((server, opts, next) => {
         }
     });
 
+    /*
     server.post("/movie/model/getAll", { schema: GetMovieTO }, (request, reply) => {
         try {
 
-            findAll(server)
+            movieService.findAll()
                 .then(data => {
                     return reply.code(200).send({
                         success: true,
@@ -458,6 +460,7 @@ export default fp((server, opts, next) => {
             return reply.send(400);
         }
     });
+    */
 
     server.post("/movie/kafka/insertAll", { schema: GetMovieTO }, (request, reply) => {
         try {
@@ -485,7 +488,7 @@ export default fp((server, opts, next) => {
                         movies.push(movie);
                     }
 
-                    insertBulk(server, movies)
+                    movieService.insertBulk(movies)
                         .then(data => {
                             return reply.code(200).send({
                                 success: true,
@@ -535,7 +538,7 @@ export default fp((server, opts, next) => {
             const redis = new RedisOperation(server);
             let movie = [];
 
-            getLastMovie(server)
+            movieService.getLastMovie()
                 .then(data => {
                     // const dv = data.dataValues;
                     const value = JSON.stringify(data);
@@ -591,7 +594,7 @@ export default fp((server, opts, next) => {
         try {
             const redis = new RedisOperation(server);
 
-            getLastMovie(server)
+            movieService.getLastMovie()
                 .then(data => {
                     // const dv = data.dataValues;
                     const value = JSON.stringify(data);
