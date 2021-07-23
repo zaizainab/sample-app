@@ -12,6 +12,17 @@ const dataInputMovie = {
 //   createdBy: '1mockLogin',
 };
 
+const dataUpdateMovie = {
+  movieId: 1,
+  name: '1mockMovieName',
+  genre: '1mockGenre',
+  rating: 0,
+//   createdBy: '1mockLogin',
+};
+
+const dataMovieId = {
+  movieId: 1,
+};
 
 const mockLoginData = {
   username: "testusername",
@@ -54,9 +65,9 @@ describe('server test', () => {
 
 });
 
-describe('movie: insert', () => {
+describe('movie services', () => {
 
-  test("POST returns 200", async () => {
+  test("(POST) insert returns 200", async () => {
     const response = await server.inject({
       method: 'POST',
       url: '/movie/model/insert',
@@ -70,12 +81,53 @@ describe('movie: insert', () => {
 
   });
 
+  test("(POST) update returns 200", async () => {
+    const response = await server.inject({
+      method: 'POST',
+      url: '/movie/model/update',
+      headers: {
+        'Authorization': token
+      },
+      body: dataUpdateMovie
+    });
+    expect(response.statusCode).toBe(200);
+    expect(JSON.parse(response.payload).message).toBe('Update successful!');
+
+  });
+
+  test("(POST) delete returns 200", async () => {
+    const response = await server.inject({
+      method: 'POST',
+      url: '/movie/model/delete',
+      headers: {
+        'Authorization': token
+      },
+      body: dataMovieId
+    });
+    expect(response.statusCode).toBe(200);
+    expect(JSON.parse(response.payload).message).toBe('Delete successful!');
+
+  });
+
+  test("(GET) get all returns 200", async () => {
+    const response = await server.inject({
+      method: 'GET',
+      url: '/movie/model/getAll',
+      headers: {
+        'Authorization': token
+      }
+    });
+    expect(response.statusCode).toBe(200);
+    expect(JSON.parse(response.payload).message).toBe('Inquiry successful!');
+
+  });
+
 });
 
 
 //---------------------------------------------------------//
 
-describe('Movie class', () => {
+describe('movie class', () => {
   const dbMock = new SequelizeMock();
 
   const movieService = new MovieService(dbMock);
@@ -87,5 +139,32 @@ describe('Movie class', () => {
     const insertData = await movieService.insert(dataInputMovie);
     expect(insertData).toBeTruthy();
     expect(movieService.insert).toHaveBeenCalledTimes(1);
+  });
+
+  // Spying on the actual methods of the class
+  jest.spyOn(movieService, 'update');
+
+  it('should update data', async () => {
+    const updateData = await movieService.update(dataUpdateMovie);
+    expect(updateData).toBeTruthy();
+    expect(movieService.update).toHaveBeenCalledTimes(1);
+  });
+
+  // Spying on the actual methods of the class
+  jest.spyOn(movieService, 'deleteMovie');
+
+  it('should delete data', async () => {
+    const deleteData = await movieService.deleteMovie(dataMovieId);
+    expect(deleteData).toBeTruthy();
+    expect(movieService.deleteMovie).toHaveBeenCalledTimes(1);
+  });
+
+  // Spying on the actual methods of the class
+  jest.spyOn(movieService, 'findAll');
+
+  it('should find all data', async () => {
+    const findAllData = await movieService.findAll();
+    expect(findAllData).toBeTruthy();
+    expect(movieService.findAll).toHaveBeenCalledTimes(1);
   });
 });

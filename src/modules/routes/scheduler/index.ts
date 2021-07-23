@@ -50,6 +50,6 @@ export default fp(async (server, options) => {
     }), err => {
         console.log(`JobRunning${counter} - error`, err);
     });
-    const jobPublish = new SimpleIntervalJob({ seconds: 10, runImmediately: true }, publishMessage, 'publishMessageMovie')
+    const jobPublish = new SimpleIntervalJob({ days: 20, /*runImmediately: true*/ }, publishMessage, 'publishMessageMovie')
     server.scheduler.addSimpleIntervalJob(jobPublish);
 });

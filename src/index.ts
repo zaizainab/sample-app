@@ -9,9 +9,12 @@ createServer()
         server.kafkaClient.on('ready', () => {
             server.log.info('Kafka Client Connection has been established successfully.');            
         });
+
+        /*
         // running kafka monitor
         const kafkaMonitor = new KafkaMonitor(server);
         kafkaMonitor.subscribeTopicMovies();
+        */
 
         server.kafkaClient.on('error', (err) => {
             server.log.info('Server not connected to Kafka');
