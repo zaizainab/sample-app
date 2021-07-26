@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+      app: fastify-movies-jj
+  name: fastify-movies-jj
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+        app: fastify-movies-jj
+  strategy: 
+    rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+          app: fastify-movies-jj
+      name: fastify-movies-jj
+    spec:
+      containers:
+      - env:
+        - name: IS_DOCKER
+          value: "true"
+        - name: PORT
+          value: "3001"
+        - name: SECRET
+          valueFrom:
+            secretKeyRef:
+              name: env
+              key: secretToken
+        - name: EXPIRE_TOKEN
+          value: "3600"
+        - name: APM_URL
+          value: http://20.195.39.206:8200
+        - name: DB_DIALECT
+          value: mssql
+        - name: DB_HOST
+          value: "20.197.67.11"
+        - name: DB_PORT
+          value: "1433"
+        - name: DB
+          value: poc
+        - name: DB_USERNAME
+          value: sa
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: env
+              key: dbPassword       
+        - name: KAFKA_HOST
+          value: "20.195.33.95:29092"
+        - name: REDIS_HOST
+          value: "20.197.67.158"
+        - name: REDIS_PORT
+          value: "6379"
+        image: acronboarding.azurecr.io/sample-app-jj:latest
+        imagePullPolicy: Always
+        name: fastify-movies-jj
+        ports:
+        - containerPort: 3001
+        resources: {}
+      restartPolicy: Always
+      serviceAccountName: ""
+status: {}

@@ -26,6 +26,7 @@ dotenv.config({
 });
 
 // configuration
+const isDocker: any = process.env.IS_DOCKER;
 const port: any = process.env.PORT;
 const dbDialect: string = process.env.DB_DIALECT;
 const db: string = process.env.DB;
@@ -155,7 +156,12 @@ export const createServer = () => new Promise((resolve, reject) => {
     // main
     const start = async () => {
         try {
-            await server.listen(port)
+            if (isDocker) {
+                await server.listen(port, '0.0.0.0');
+                server.log.info('server running on docker');
+            } else {
+                await server.listen(port);
+            }
             server.blipp();
             server.log.info(`server listening on ${JSON.stringify(server.server.address())}`);
             resolve(server);
